@@ -1,0 +1,8 @@
+/.env
+/basicinfo.json
+/eslint.config.mjs
+/info.json
+/node_modules
+/response.json
+/tmp
+/yarn.lock
