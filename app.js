@@ -4,7 +4,7 @@ const chalk = require("chalk");
 require("dotenv").config();
 const app = express();
 
-const originAllowed = process.env.FRONT_END_ADDRESS.split(",");
+const originAllowed = process.env.FRONTEND_ADDRESS.split(",");
 
 app.use(express.json());
 app.use(
