@@ -5,6 +5,7 @@ require("dotenv").config();
 const app = express();
 
 const originAllowed = process.env.FRONTEND_ADDRESS.split(",");
+console.log(originAllowed);
 
 app.use(express.json());
 app.use(
