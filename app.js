@@ -11,7 +11,7 @@ app.use((req,res,next)=>{
   const origin = req.headers.origin||'unknown origin';
   const referer = req.headers.referer || req.headers.referrer || 'unknown referer';
   const ip = req.ip;
-  const url = req,originalUrl;
+  const url = req.originalUrl;
 
   console.log(`Request details:
     origin: ${origin},
