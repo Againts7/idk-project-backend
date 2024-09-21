@@ -7,6 +7,21 @@ const app = express();
 const originAllowed = process.env.FRONTEND_ADDRESS.split(",");
 console.log(originAllowed);
 
+app.use((req,res,next)=>{
+  const origin = req.headers.origin||'unknown origin';
+  const referer = req.headers.referer || req.headers.referrer || 'unknown referer';
+  const ip = req.ip;
+  const url = req,originalUrl;
+
+  console.log(`Request details:
+    origin: ${origin},
+    referer: ${referer};
+    ip: ${ip},
+    url: ${url}
+  `)
+  next();
+})
+
 app.use(express.json());
 app.use(
   cors({
