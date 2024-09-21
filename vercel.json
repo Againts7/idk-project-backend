@@ -5,5 +5,8 @@
       "source": "/(.*)",
       "destination": "/api"
     }
-  ]
+  ],
+  "env": {
+    "FRONTEND_ADDRESS": "https://idk-project-frontend.vercel.app"
+  }
 }
