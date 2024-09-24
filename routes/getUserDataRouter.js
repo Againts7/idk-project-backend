@@ -1,26 +1,17 @@
 const express = require("express");
+const { findUser } = require("../utils/mongoose");
 
 const router = express.Router();
 
-const users = [
-  {
-    id: 1,
-    username: "admin",
-    password: "admin123",
-    role: "superuser",
-  },
-];
-
 // eslint-disable-next-line no-unused-vars
-router.get("/", (req, res, next) => {
+router.get("/", async (req, res, next) => {
   const username = req.user.username;
-  const data = users.find((u) => u.username === username);
-  if (data) {
-    // eslint-disable-next-line no-unused-vars
-    const { password, ...rest } = data;
+  const userData = await findUser(username);
+  if (userData) {
+    const { name, data } = userData;
     return res.json({
       status: "success",
-      data: rest,
+      data: { username: name, data },
     });
   }
   return res.json({

@@ -6,3 +6,6 @@
 /response.json
 /tmp
 /yarn.lock
+/bcrypt.json
+/mongo.js
+/.gitignore
