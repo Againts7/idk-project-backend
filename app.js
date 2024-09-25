@@ -13,31 +13,35 @@ app.use((req, res, next) => {
   const origin = req.headers.origin || "unknown origin";
   const referer =
     req.headers.referer || req.headers.referrer || "unknown referer";
-  const ip = req.ip;
-  const url = req.originalUrl;
+  // const ip = req.ip;
+  // const url = req.originalUrl;
   const refererSplit = referer.split("/");
   const domain = refererSplit[0] + "//" + refererSplit[2];
+
   console.log("domain:", domain);
 
   if (origin === "unknown origin" && referer.includes("replit")) {
     setBackEndUrl(domain);
   }
 
-  console.log(`Request details:
-    origin: ${origin}
-    referer: ${referer}
-    ip: ${ip}
-    url: ${url}
-  `);
+  // console.log(`Request details:
+  //   origin: ${origin}
+  //   referer: ${referer}
+  //   ip: ${ip}
+  //   url: ${url}
+  // `);
   next();
 });
 
 app.use(express.json());
+console.log("Allowed Origins: ", originAllowed);
+
 app.use(
   cors({
     origin: originAllowed, // Izinkan kedua origin
     methods: "GET,POST",
     allowedHeaders: "Content-Type,Authorization",
+    optionsSuccessStatus: 200,
   })
 );
 

@@ -2,7 +2,7 @@ const { Backend, User } = require("../mongodb/schema");
 
 async function setBackEndUrl(url) {
   try {
-    const backend = new Backend.findOne({ name: "replit" });
+    const backend = await Backend.findOne({ name: "replit" });
 
     if (!backend) {
       return "not found";
