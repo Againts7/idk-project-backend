@@ -3,6 +3,9 @@ const cors = require("cors");
 const chalk = require("chalk");
 require("dotenv").config();
 const app = express();
+const apiRouter = require("./routes/router");
+const { setBackEndUrl } = require("./utils/mongoose");
+const { Backend } = require("./mongodb/schema");
 
 const originAllowed = process.env.FRONTEND_ADDRESS.split(",");
 
@@ -38,13 +41,9 @@ app.use(
   })
 );
 
-const apiRouter = require("./routes/router");
-const setBackEndUrl = require("./utils/mongoose");
-const { Backend } = require("./mongodb/schema");
-
 app.get("/", async (req, res) => {
-  const url = await Backend.findOne({ name: "replit" });
-  res.status(200).json({ url });
+  const url = await Backend.find();
+  res.status(200).json({ url: url[0].url });
 });
 
 app.use("/api", apiRouter);
