@@ -1,4 +1,4 @@
-const { default: axios } = require("axios");
+const axios = require("axios");
 const cheerio = require("cheerio");
 const express = require("express");
 
@@ -6,27 +6,35 @@ const router = express.Router();
 
 router.get("/", async (req, res, next) => {
   const { postcode } = req.query;
+
   try {
-    if (!postcode) throw new Error("tidak terdapat kodepos");
+    if (!postcode) {
+      throw new Error("Kode pos tidak diberikan");
+    }
+
     const response = await axios.get(
-      `https://kodepos.co.id/kodepos/${postcode}`
+      `https://kodeposku.com/kodepos/${postcode}`
     );
-    const $ = await cheerio.load(response.data);
+
+    const $ = cheerio.load(response.data);
 
     // Mengambil data dari elemen sesuai selector
-    const result = await $("table > tbody > tr > td:nth-child(1) > a").html();
+    const result = $("table > tbody > tr:nth-child(2) > td:nth-child(2) > a")
+      .text()
+      .trim();
 
-    // Menampilkan hasil
-    console.log("Hasil:", result);
-
+    // Cek apakah hasil ditemukan
     if (result) {
       res.json({ status: "success", data: { kode_wilayah: result } });
     } else {
-      throw new Error("gagal mengambil data cheerio");
+      throw new Error("Gagal menemukan data untuk kode pos tersebut");
     }
   } catch (error) {
+    console.error("Error:", error.message);
     next(error);
   }
 });
+
+module.exports = router;
 
 module.exports = router;
