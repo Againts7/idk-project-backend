@@ -19,8 +19,38 @@ function searchKodeWilayah(data) {
 
   if (!provinsiData) {
     provinsiData = Object.entries(kodeWilayahMap).find(
-      ([kode, nama]) => kode.length === 2 && nama.includes(prov.toLowerCase())
+      ([kode, nama]) =>
+        kode.length === 2 &&
+        prov.includes(" ") &&
+        nama.includes(prov.toLowerCase())
     );
+  }
+
+  if (!provinsiData) {
+    const provInputSplit = prov
+      .split(" ")
+      .filter((item) => item !== " ")
+      .map((item) => item.trim());
+
+    console.log(provInputSplit);
+
+    if (provInputSplit.length > 1) {
+      let result = [];
+
+      provInputSplit.some((value) => {
+        Object.entries(kodeWilayahMap).find(([kode, nama]) => {
+          if (kode.length === 2 && nama.includes(".")) {
+            console.log(nama);
+            if (nama.includes(value)) {
+              result.push(kode, nama);
+              return;
+            }
+          }
+        });
+      });
+
+      if (result.length > 0) provinsiData = result;
+    }
   }
 
   if (!provinsiData) return "Provinsi tidak ditemukan!";
@@ -170,13 +200,13 @@ function searchKodeWilayah(data) {
   return result;
 }
 
-// Contoh penggunaan
+// // Contoh penggunaan
 // console.log(
 //   searchKodeWilayah({
-//     prov: "jawa timur",
+//     prov: "dki jakarta",
 //     // kotkab: "malang",
-//     kec: "nguling",
-//     // keldes: "bahagia",
+//     kec: "kemayoran",
+//     keldes: "cempaka putih",
 //   })
 // );
 
