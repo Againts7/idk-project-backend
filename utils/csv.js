@@ -30,7 +30,7 @@ function searchKodeWilayah(data) {
     const provInputSplit = prov
       .split(" ")
       .filter((item) => item !== " ")
-      .map((item) => item.trim());
+      .map((item) => item.toLowerCase().trim());
 
     console.log(provInputSplit);
 
