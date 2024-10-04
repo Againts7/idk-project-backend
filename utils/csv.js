@@ -27,21 +27,25 @@ function searchKodeWilayah(data) {
   }
 
   if (!provinsiData) {
+    console.log("prov:", prov);
     const provInputSplit = prov
       .split(" ")
       .filter((item) => item !== " ")
       .map((item) => item.toLowerCase().trim());
 
-    console.log(provInputSplit);
+    console.log("prov input split", provInputSplit);
 
     if (provInputSplit.length > 1) {
       let result = [];
 
-      provInputSplit.some((value) => {
+      // Prioritaskan untuk mencocokkan kata-kata yang lebih spesifik (seperti 'jakarta')
+      provInputSplit.forEach((value, index) => {
         Object.entries(kodeWilayahMap).find(([kode, nama]) => {
-          if (kode.length === 2 && nama.includes(".")) {
-            console.log(nama);
-            if (nama.includes(value)) {
+          // Mencocokkan kata secara lebih spesifik (sesuaikan dengan aturan pencocokan)
+          if (kode.length === 2 && nama.toLowerCase().includes(value)) {
+            if (index === provInputSplit.length - 1) {
+              // Jika ini adalah kata terakhir dari input, maka simpan hasil yang ditemukan
+              console.log("nama yang lebih spesifik:", nama);
               result.push(kode, nama);
               return;
             }
@@ -200,10 +204,10 @@ function searchKodeWilayah(data) {
   return result;
 }
 
-// // Contoh penggunaan
+// Contoh penggunaan
 // console.log(
 //   searchKodeWilayah({
-//     prov: "dki jakarta",
+//     prov: "daerah istimewa",
 //     // kotkab: "malang",
 //     kec: "kemayoran",
 //     keldes: "cempaka putih",
