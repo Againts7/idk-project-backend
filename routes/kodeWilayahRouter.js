@@ -15,6 +15,10 @@ router.get("/", async (req, res, next) => {
       result = [await getRandomKodeWilayah(result[0].kode)];
     }
 
+    if (!result) {
+      throw new Error("kode wilayah tidak ditemukan!");
+    }
+
     return res.json({ status: "success", data: result });
   } catch (e) {
     next(e);
