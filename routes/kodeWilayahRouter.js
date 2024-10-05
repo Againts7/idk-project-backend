@@ -1,5 +1,5 @@
 const express = require("express");
-const searchKodeWilayah = require("../utils/csv");
+const { searchKodeWilayah, getRandomKodeWilayah } = require("../utils/csv");
 
 const router = express.Router();
 
@@ -9,7 +9,12 @@ router.get("/", async (req, res, next) => {
     if (!prov) {
       throw new Error("setidaknya prov");
     }
-    const result = await searchKodeWilayah({ prov, kotkab, kec, keldes });
+    let result = await searchKodeWilayah({ prov, kotkab, kec, keldes });
+
+    if (result && result[0]?.kode?.length !== 13) {
+      result = [await getRandomKodeWilayah(result[0].kode)];
+    }
+
     return res.json({ status: "success", data: result });
   } catch (e) {
     next(e);
