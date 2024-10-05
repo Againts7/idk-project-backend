@@ -301,14 +301,32 @@ async function searchKodeWilayah(data) {
         if (cobaKeldes) return [cobaKeldes];
 
         const cobaKec = searchKec(kec, tersedikit, addReport);
-        if (cobaKec && cobaKec.length) return [cobaKec[0]];
+        if (cobaKec && cobaKec.length) {
+          const mirip = searchSimilarity(
+            kec,
+            cobaKec.map((item) => item.nama)
+          );
+          if (mirip) return cobaKec.find(({ nama }) => nama === mirip);
+        }
 
         const cobaKotkab = searchKotKab(kotkab, tersedikit, addReport);
 
-        if (cobaKotkab && cobaKotkab.length) return [cobaKotkab[0]];
+        if (cobaKotkab && cobaKotkab.length) {
+          const mirip = searchSimilarity(
+            kotkab,
+            cobaKotkab.map((item) => item.nama)
+          );
+          if (mirip) return cobaKotkab.find(({ nama }) => nama === mirip);
+        }
 
         const cobaProv = searchProv(prov, tersedikit, addReport);
-        if (cobaProv) return [cobaProv[0]];
+        if (cobaProv) {
+          const mirip = searchSimilarity(
+            prov,
+            cobaProv.map((item) => item.nama)
+          );
+          if (mirip) return cobaProv.find(({ nama }) => nama === mirip);
+        }
 
         console.log(cobaKeldes, cobaKec, cobaKotkab, cobaProv);
 
@@ -361,10 +379,10 @@ async function searchKodeWilayah(data) {
 // Contoh penggunaan
 // (async () => {
 //   const res = await searchKodeWilayah({
-//     prov: "Kalimantan Barat",
-//     kotkab: "Landak",
-//     kec: "Ngabang",
-//     keldes: "Tareng",
+//     prov: "Jawa Barat",
+//     kotkab: "Bandung Barat",
+//     // kec: "Ngabang",
+//     keldes: "Sukamulya",
 //   });
 
 //   //console.log(res);
