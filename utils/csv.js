@@ -58,7 +58,7 @@ function compareData(forCompare, keldesDitemukan, addReport, context) {
     addReport(
       `komparasi antara ${context} ditemukan sebanyak: ` + relasi.length
     );
-    //console.log(`compare result ${context}:`, relasi);
+    // console.log(`compare result ${context}:`, relasi);
   } else {
     addReport(`komparasi antara ${context} tidak ditemukan`);
   }
@@ -282,11 +282,11 @@ async function searchKodeWilayah(data) {
 
     // #################################################################
 
-    //console.log(chalk.bgRedBright("masih belum nemu :("));
+    console.log(chalk.bgRedBright("masih belum nemu :("));
 
     const nonZero = atleast.filter(({ length }) => length !== 0);
 
-    //console.log("atleast", atleast);
+    // console.log("nonzero", nonZero);
 
     if (nonZero && nonZero.length > 0) {
       const minim = Math.min(...nonZero.map((item) => item.length));
@@ -295,27 +295,41 @@ async function searchKodeWilayah(data) {
         .context;
 
       if (tersedikit.length > 0) {
-        const coba = tersedikit.find(({ nama }) => nama === keldes);
-        if (coba) {
-          //console.log(typeof coba, "coba", coba);
-          return [coba];
-        } else {
-          const namaarray = tersedikit.map(({ nama }) => nama);
-          const mirip = searchSimilarity(keldes, namaarray);
-          const cobalagi = tersedikit.find(({ nama }) => nama === mirip);
-          if (cobalagi) {
-            //console.log(typeof cobalagi, "cobalagi");
-            return [cobalagi];
-          }
+        const cobaKeldes = tersedikit.find(
+          ({ kode, nama }) => kode.length === 13 && nama === keldes
+        );
+        if (cobaKeldes) return [cobaKeldes];
+
+        const cobaKec = tersedikit.find(
+          ({ kode, nama }) => kode.length === 8 && nama === kec
+        );
+        if (cobaKec) return [cobaKec];
+
+        const cobaKotkab = tersedikit.find(
+          ({ kode, nama }) => kode.length === 5 && nama === kotkab
+        );
+        if (cobaKotkab) return [cobaKotkab];
+
+        const cobaProv = tersedikit.find(
+          ({ kode, nama }) => kode.length === 2 && nama === prov
+        );
+        if (cobaProv) return [cobaProv];
+
+        const namaarray = tersedikit.map(({ nama }) => nama);
+        const mirip = searchSimilarity(keldes, namaarray);
+        const cobalagi = tersedikit.find(({ nama }) => nama === mirip);
+        if (cobalagi) {
+          console.log(typeof cobalagi, "cobalagi");
+          return [cobalagi];
         }
       }
     }
 
-    //console.log(chalk.bgMagenta("akhirnya sampai ujung :3"));
+    console.log(chalk.bgMagenta("akhirnya sampai ujung :3"));
 
-    const lastpilihan = keldes || kec || kotkab || prov;
+    const lastpilihan = prov || kotkab || kec || keldes;
 
-    //console.log(chalk.bgMagenta("last pilihan"), lastpilihan);
+    console.log(chalk.bgMagenta("last pilihan"), lastpilihan);
 
     const lastarray =
       (keldesDitemukan.length > 0 ? keldesDitemukan : false) ||
@@ -348,23 +362,23 @@ async function searchKodeWilayah(data) {
 }
 
 // Contoh penggunaan
-// (async () => {
-//   const res = await searchKodeWilayah({
-//     prov: "jawa",
-//     // kotkab: "bandung",
-//     // kec: "sindangkerta",
-//     // keldes: "cicangkanghilir",
-//   });
+(async () => {
+  const res = await searchKodeWilayah({
+    prov: "kalimantan barat",
+    kotkab: "landak",
+    kec: "ngabang",
+    keldes: "tareng",
+  });
 
-//    //console.log(res);
+  //console.log(res);
 
-//   let res2 = "";
-//   if (res && res[0]?.kode?.length !== 13) {
-//     res2 = [await getRandomKodeWilayah(res[0].kode)];
-//      //console.log(res2);
-//   }
+  let res2 = "";
+  if (res && res[0]?.kode?.length !== 13) {
+    res2 = [await getRandomKodeWilayah(res[0].kode)];
+    //console.log(res2);
+  }
 
-//    //console.log(chalk.bgRed("result"), res, res2);
-// })();
+  console.log(chalk.bgRed("result"), res, res2);
+})();
 
 module.exports = { searchKodeWilayah, getRandomKodeWilayah };
