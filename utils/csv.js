@@ -12,7 +12,9 @@ const searchKeldes = require("./csv/searchKeldes");
 async function readCSV() {
   const kodeWilayahMap = [];
   return new Promise((resolve, reject) => {
-    fs.createReadStream("./databases/base.csv")
+    fs.createReadStream(
+      require("path").join(__dirname, "../databases/base.csv")
+    )
       .pipe(csv())
       .on("data", (row) => {
         kodeWilayahMap.push(row); // Menambahkan setiap baris data ke array
