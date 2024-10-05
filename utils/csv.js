@@ -69,10 +69,10 @@ function compareData(forCompare, keldesDitemukan, addReport, context) {
 async function searchKodeWilayah(data) {
   let { prov = "", kotkab = "", kec = "", keldes = "" } = data;
 
-  prov = prov.toLowerCase();
-  kotkab = kotkab.toLowerCase();
-  kec = kec.toLowerCase();
-  keldes = keldes.toLowerCase();
+  prov = prov.toLowerCase().trim();
+  kotkab = kotkab.toLowerCase().trim();
+  kec = kec.toLowerCase().trim();
+  keldes = keldes.toLowerCase().trim();
 
   let report = "";
 
@@ -300,20 +300,17 @@ async function searchKodeWilayah(data) {
         );
         if (cobaKeldes) return [cobaKeldes];
 
-        const cobaKec = tersedikit.find(
-          ({ kode, nama }) => kode.length === 8 && nama === kec
-        );
-        if (cobaKec) return [cobaKec];
+        const cobaKec = searchKec(kec, tersedikit, addReport);
+        if (cobaKec && cobaKec.length) return [cobaKec[0]];
 
-        const cobaKotkab = tersedikit.find(
-          ({ kode, nama }) => kode.length === 5 && nama === kotkab
-        );
-        if (cobaKotkab) return [cobaKotkab];
+        const cobaKotkab = searchKotKab(kotkab, tersedikit, addReport);
 
-        const cobaProv = tersedikit.find(
-          ({ kode, nama }) => kode.length === 2 && nama === prov
-        );
-        if (cobaProv) return [cobaProv];
+        if (cobaKotkab && cobaKotkab.length) return [cobaKotkab[0]];
+
+        const cobaProv = searchProv(prov, tersedikit, addReport);
+        if (cobaProv) return [cobaProv[0]];
+
+        console.log(cobaKeldes, cobaKec, cobaKotkab, cobaProv);
 
         const namaarray = tersedikit.map(({ nama }) => nama);
         const mirip = searchSimilarity(keldes, namaarray);
