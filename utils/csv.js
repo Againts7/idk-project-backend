@@ -1,217 +1,363 @@
-const kodeWilayah = require("../databases/kodeWilayah");
+// const kodeWilayah = require("../databases/kodeWilayah");
 
-const kodeWilayahMap = kodeWilayah.reduce((map, [kode, nama]) => {
-  map[kode] = nama;
-  return map;
-}, {});
+const fs = require("fs");
+const csv = require("csv-parser");
+const chalk = require("chalk");
+const searchSimilarity = require("./string-similarity");
+const searchProv = require("./csv/searchProv");
+const searchKotKab = require("./csv/searchKotkab");
+const searchKec = require("./csv/searchKec");
+const searchKeldes = require("./csv/searchKeldes");
 
-function searchKodeWilayah(data) {
-  const { prov = "", kotkab = "", kec = "", keldes = "" } = data;
+async function readCSV() {
+  const kodeWilayahMap = [];
+  return new Promise((resolve, reject) => {
+    fs.createReadStream("./databases/base.csv")
+      .pipe(csv())
+      .on("data", (row) => {
+        kodeWilayahMap.push(row); // Menambahkan setiap baris data ke array
+      })
+      .on("end", () => {
+        console.log("read done");
+        resolve(kodeWilayahMap);
+      })
+      .on("error", reject);
+  });
+}
 
-  if (!prov) return "prov dibutuhkan!";
+async function getRandomKodeWilayah(kodeInput) {
+  const kodeWilayahList = (await readCSV()).map((item) => {
+    return { ...item, nama: item.nama.toLowerCase() };
+  });
 
-  // Mencari data provinsi
-  let provinsiData = [];
-  provinsiData = Object.entries(kodeWilayahMap).find(
-    ([kode, nama]) =>
-      kode.length === 2 && nama.toLowerCase() === prov.toLowerCase()
+  console.log(kodeInput);
+  return kodeWilayahList.find(
+    ({ kode }) => kode.length === 13 && kode.includes(kodeInput)
+  );
+}
+
+function compareData(forCompare, keldesDitemukan, addReport, context) {
+  if (keldesDitemukan.length < 1) {
+    addReport("data komparasi tidak valid: " + context);
+    return [];
+  }
+
+  const kodeForCompare = forCompare.map((item) => item.kode);
+
+  const relasi = keldesDitemukan.filter((item) =>
+    kodeForCompare.some((i) => item.kode.startsWith(i))
   );
 
-  if (!provinsiData) {
-    provinsiData = Object.entries(kodeWilayahMap).find(
-      ([kode, nama]) =>
-        kode.length === 2 &&
-        prov.includes(" ") &&
-        nama.includes(prov.toLowerCase())
+  if (relasi && relasi.length === 1) {
+    addReport(`komparasi antara ${context} berhasil. mengembalikan nilai...`);
+    return relasi;
+  } else if (relasi.length > 0) {
+    addReport(
+      `komparasi antara ${context} ditemukan sebanyak: ` + relasi.length
     );
-  }
-
-  if (!provinsiData) {
-    console.log("prov:", prov);
-    const provInputSplit = prov
-      .split(" ")
-      .filter((item) => item !== " ")
-      .map((item) => item.toLowerCase().trim());
-
-    console.log("prov input split", provInputSplit);
-
-    if (provInputSplit.length > 1) {
-      let result = [];
-
-      // Prioritaskan untuk mencocokkan kata-kata yang lebih spesifik (seperti 'jakarta')
-      provInputSplit.forEach((value, index) => {
-        Object.entries(kodeWilayahMap).find(([kode, nama]) => {
-          // Mencocokkan kata secara lebih spesifik (sesuaikan dengan aturan pencocokan)
-          if (kode.length === 2 && nama.toLowerCase().includes(value)) {
-            if (index === provInputSplit.length - 1) {
-              // Jika ini adalah kata terakhir dari input, maka simpan hasil yang ditemukan
-              console.log("nama yang lebih spesifik:", nama);
-              result.push(kode, nama);
-              return;
-            }
-          }
-        });
-      });
-
-      if (result.length > 0) provinsiData = result;
-    }
-  }
-
-  if (!provinsiData) return "Provinsi tidak ditemukan!";
-
-  // Filter data kabupaten/kota berdasarkan kode provinsi
-  const provinsiDataCollection = Object.entries(kodeWilayahMap).filter(
-    ([kode]) => kode.startsWith(provinsiData[0])
-  );
-
-  let kotkabData = [];
-  let kotkabDataCollection = [];
-
-  if (kotkab) {
-    kotkabData = provinsiDataCollection.find(
-      ([kode, nama]) =>
-        kode.length === 5 && nama.toLowerCase() === kotkab.toLowerCase()
-    );
-
-    // jika tidak ada, coba hapus kota jika ada
-    if (!kotkabData) {
-      kotkabData = provinsiDataCollection.find(
-        ([kode, nama]) =>
-          kode.length === 5 &&
-          nama
-            .replace(/^(kota)\s*/i, "")
-            .trim()
-            .toLowerCase() ===
-            kotkab
-              .replace(/^(kota)\s*/i, "")
-              .trim()
-              .toLowerCase()
-      );
-    }
-
-    // jika tidak ada, coba hapus kab/upaten
-    if (!kotkabData) {
-      kotkabData = provinsiDataCollection.find(
-        ([kode, nama]) =>
-          kode.length === 5 &&
-          nama
-            .replace(/^(kabupaten|kab\.)\s*/i, "")
-            .trim()
-            .toLowerCase() ===
-            kotkab
-              .replace(/^(kabupaten|kab\.)\s*/i, "")
-              .trim()
-              .toLowerCase()
-      );
-    }
-
-    // jika tidak ada, kosongkan data dengan nilai default
-    if (!kotkabData) kotkabData = [];
-
-    // Filter data kecamatan berdasarkan kode kabupaten/kota
-    // jika kotkab tidak ada maka akan bagaimana
-    kotkabDataCollection = provinsiDataCollection.filter(([kode]) =>
-      kode.startsWith(kotkabData[0])
-    );
+    console.log(`compare result ${context}:`, relasi);
   } else {
-    kotkabDataCollection = provinsiDataCollection;
+    addReport(`komparasi antara ${context} tidak ditemukan`);
   }
 
-  let kecData = [];
-  let kecDataCollection = [];
+  return relasi;
+}
 
-  if (kec) {
-    kecData = kotkabDataCollection.find(
-      ([kode, nama]) =>
-        kode.length === 8 && nama.toLowerCase() === kec.toLowerCase()
+async function searchKodeWilayah(data) {
+  let { prov = "", kotkab = "", kec = "", keldes = "" } = data;
+
+  prov = prov.toLowerCase();
+  kotkab = kotkab.toLowerCase();
+  kec = kec.toLowerCase();
+  keldes = keldes.toLowerCase();
+
+  let report = "";
+
+  const atleast = [];
+
+  function addReport(text) {
+    console.log(
+      text.includes("berhasil")
+        ? chalk.bgWhite("Info:")
+        : text.includes("komparasi")
+        ? chalk.bgYellow("Info:")
+        : text.includes("input")
+        ? chalk.bgRed("Info:")
+        : chalk.bgGreen("Info:"),
+      text
     );
-
-    // jika tidak ada, coba cari jika ada perbedaan spasi
-    if (!kecData) {
-      kecData = kotkabDataCollection.find(
-        ([kode, nama]) =>
-          kode.length === 8 &&
-          nama.replace(" ", "").toLowerCase() ===
-            kec.replace(" ", "").toLowerCase()
-      );
-    }
-
-    // kosongkan data jika tidak ada
-    if (!kecData) kecData = [];
-
-    // Filter data kelurahan/desa berdasarkan kode kecamatan
-    kecDataCollection = kotkabDataCollection.filter(([kode]) =>
-      kode.startsWith(kecData[0])
-    );
-  } else {
-    kecDataCollection = kotkabDataCollection;
+    report += `\n${text}`;
   }
 
-  let keldesData = [];
+  try {
+    // if (!keldes) throw new Error("dibutuhkan keldes");
 
-  if (keldes) {
-    keldesData =
-      kecDataCollection.find(
-        ([kode, nama]) =>
-          kode.length === 13 && nama.toLowerCase() === keldes.toLowerCase()
-      ) || [];
-  }
+    const kodeWilayahList = (await readCSV()).map((item) => {
+      return { ...item, nama: item.nama.toLowerCase() };
+    });
 
-  const result = {
-    provinsi_data: {
-      kode: provinsiData[0] || null,
-      nama: provinsiData[1] || null,
-    },
-    kotkab_data: { kode: kotkabData[0] || null, nama: kotkabData[1] || null },
-    kec_data: { kode: kecData[0] || null, nama: kecData[1] || null },
-    keldes_data: { kode: keldesData[0] || null, nama: keldesData[1] || null },
-  };
+    if (kodeWilayahList.length < 1) throw new Error("data tidak terbaca!");
 
-  if (keldesData.length < 1) {
-    if (kecDataCollection && kecDataCollection.length > 0) {
-      const [kode, nama] = kecDataCollection.find(
-        ([kode]) => kode.length === 13
-      );
-      result.keldes_data = { kode, nama };
-    } else if (kotkabDataCollection && kotkabDataCollection.length > 0) {
-      const [kode, nama] = kotkabDataCollection.find(
-        ([kode]) => kode.length === 13
-      );
-      result.keldes_data = { kode, nama };
+    // mencari masing-masing dari parameter
+
+    let provDitemukan = [];
+
+    if (prov) {
+      provDitemukan = searchProv(prov, kodeWilayahList, addReport);
     } else {
-      const [kode, nama] = provinsiDataCollection.find(
-        ([kode]) => kode.length === 13
-      );
-      result.keldes_data = { kode, nama };
+      addReport("tidak terdapat prov input");
     }
-  }
 
-  if (kotkabData.length < 1) {
-    const kotkabSelected = result?.keldes_data?.kode.slice(0, 5);
-    const [kode, nama] = provinsiDataCollection.find(
-      ([kode]) => kode === kotkabSelected
-    );
-    result.kotkab_data = { kode, nama };
-  }
-  if (kecData.length < 1) {
-    const context = result.keldes_data.kode.slice(0, 8);
-    const [kode, nama] = provinsiDataCollection.find(
-      ([kode]) => kode === context
-    );
-    result.kec_data = { kode, nama };
-  }
+    let kotkabDitemukan = [];
 
-  return result;
+    if (kotkab) {
+      kotkabDitemukan = searchKotKab(kotkab, kodeWilayahList, addReport);
+    } else {
+      addReport("tidak terdapat kotokab input");
+    }
+
+    let kecDitemukan = [];
+
+    if (kec) {
+      kecDitemukan = searchKec(kec, kodeWilayahList, addReport);
+    } else {
+      addReport("tidak terdapat kec input");
+    }
+
+    const keldesDitemukan = [];
+
+    if (keldes) {
+      keldesDitemukan.push(...searchKeldes(keldes, kodeWilayahList, addReport));
+    } else {
+      addReport("tidak terdapat keldes input");
+    }
+
+    // mengkompare masing masing hasil #####################################
+
+    let compare_prov_kotkab = [];
+
+    if (prov && kotkab) {
+      compare_prov_kotkab = compareData(
+        provDitemukan,
+        kotkabDitemukan,
+        addReport,
+        "prov-kotkab"
+      );
+    }
+
+    if (compare_prov_kotkab.length === 1) {
+      console.log(typeof compare_prov_kotkab, "compare_prov_kotkab");
+      return compare_prov_kotkab;
+    }
+    if (compare_prov_kotkab.length > 1) {
+      atleast.push({
+        context: compare_prov_kotkab,
+        length: compare_prov_kotkab.length,
+      });
+    }
+
+    // ###############################################################
+
+    let compare_prov_kec = [];
+
+    if (prov && kec) {
+      compare_prov_kec = compareData(
+        provDitemukan,
+        kecDitemukan,
+        addReport,
+        "prov-kec"
+      );
+    }
+
+    if (compare_prov_kec.length === 1) {
+      console.log(typeof compare_prov_kec, "compare_prov_kec");
+      return compare_prov_kec;
+    }
+    if (compare_prov_kec.length > 1) {
+      atleast.push({
+        context: compare_prov_kec,
+        length: compare_prov_kec.length,
+      });
+    }
+
+    // #########################################################
+
+    let compare_prov_keldes = [];
+
+    if (prov && keldes) {
+      compare_prov_keldes = compareData(
+        provDitemukan,
+        keldesDitemukan,
+        addReport,
+        "prov-keldes"
+      );
+    }
+
+    if (compare_prov_keldes.length === 1) {
+      console.log(typeof compare_prov_keldes, "compare_prov_keldes");
+      return compare_prov_keldes;
+    }
+    if (compare_prov_keldes.length > 1) {
+      atleast.push({
+        context: compare_prov_keldes,
+        length: compare_prov_keldes.length,
+      });
+    }
+
+    // #########################################################
+
+    let compare_kotkab_kec = [];
+
+    if (kotkab && kec) {
+      compare_kotkab_kec = compareData(
+        kotkabDitemukan,
+        kecDitemukan,
+        addReport,
+        "kotkab-kec"
+      );
+    }
+
+    if (compare_kotkab_kec.length === 1) {
+      console.log(typeof compare_kotkab_kec, "compare_kotkab_kec");
+      return compare_kotkab_kec;
+    }
+    if (compare_kotkab_kec.length > 1) {
+      atleast.push({
+        context: compare_kotkab_kec,
+        length: compare_kotkab_kec.length,
+      });
+    }
+
+    // ######################################################
+
+    let compare_kotkab_keldes = [];
+
+    if (kotkab && keldes) {
+      compare_kotkab_keldes = compareData(
+        kotkabDitemukan,
+        keldesDitemukan,
+        addReport,
+        "kotkab-keldes"
+      );
+    }
+
+    if (compare_kotkab_keldes.length === 1) {
+      console.log(typeof compare_kotkab_keldes, "compare_kotkab_keldes");
+      return compare_kotkab_keldes;
+    }
+    if (compare_kotkab_keldes.length > 1) {
+      atleast.push({
+        context: compare_kotkab_keldes,
+        length: compare_kotkab_keldes.length,
+      });
+    }
+
+    // #########################################################
+
+    let compare_kec_keldes = [];
+
+    if (kec && keldes) {
+      compare_kec_keldes = compareData(
+        kecDitemukan,
+        keldesDitemukan,
+        addReport,
+        "kec-keldes"
+      );
+    }
+
+    if (compare_kec_keldes.length === 1) {
+      console.log(typeof compare_kec_keldes, "compare_kec_keldes");
+      return compare_kec_keldes;
+    }
+
+    if (compare_kec_keldes.length > 1) {
+      atleast.push({
+        context: compare_kec_keldes,
+        length: compare_kec_keldes.length,
+      });
+    }
+
+    // #################################################################
+
+    console.log(chalk.bgRedBright("masih belum nemu :("));
+
+    const nonZero = atleast.filter(({ length }) => length !== 0);
+
+    console.log("atleast", atleast);
+
+    if (nonZero && nonZero.length > 0) {
+      const minim = Math.min(...nonZero.map((item) => item.length));
+
+      const tersedikit = nonZero.filter((item) => item.length === minim)[0]
+        .context;
+
+      if (tersedikit.length > 0) {
+        const coba = tersedikit.find(({ nama }) => nama === keldes);
+        if (coba) {
+          console.log(typeof coba, "coba", coba);
+          return [coba];
+        } else {
+          const namaarray = tersedikit.map(({ nama }) => nama);
+          const mirip = searchSimilarity(keldes, namaarray);
+          const cobalagi = tersedikit.find(({ nama }) => nama === mirip);
+          if (cobalagi) {
+            console.log(typeof cobalagi, "cobalagi");
+            return [cobalagi];
+          }
+        }
+      }
+    }
+
+    console.log(chalk.bgMagenta("akhirnya sampai ujung :3"));
+
+    const lastpilihan = keldes || kec || kotkab || prov;
+
+    console.log(chalk.bgMagenta("last pilihan"), lastpilihan);
+
+    const lastarray =
+      (keldesDitemukan.length > 0 ? keldesDitemukan : false) ||
+      (kecDitemukan.length > 0 ? kecDitemukan : false) ||
+      (kotkabDitemukan.length > 0 ? kotkabDitemukan : false) ||
+      (provDitemukan.length > 0 ? provDitemukan : false);
+
+    console.log(chalk.bgMagenta("last array"), lastarray);
+
+    if (lastarray.length === 1) return lastarray;
+
+    const atleastNama = lastarray.map((item) => item.nama);
+
+    const similarity = searchSimilarity(lastpilihan, atleastNama);
+
+    const lastkeldes = lastarray.find((item) => item.nama === similarity);
+    if (lastkeldes) {
+      console.log("lastkeldes", lastkeldes);
+      return [lastkeldes];
+    }
+
+    return "gagal mendapatkan kode wilayah" + report;
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 // Contoh penggunaan
-// console.log(
-//   searchKodeWilayah({
-//     prov: "daerah istimewa",
-//     // kotkab: "malang",
-//     kec: "kemayoran",
-//     keldes: "cempaka putih",
-//   })
-// );
+// (async () => {
+//   const res = await searchKodeWilayah({
+//     // prov: "jawa",
+//     // kotkab: "cimahi",
+//     // kec: "sindangkerta",
+//     keldes: "cicangkanghilir",
+//   });
 
-module.exports = searchKodeWilayah;
+//   console.log(res);
+
+//   let res2 = "";
+//   if (res && res[0]?.kode?.length !== 13) {
+//     res2 = [await getRandomKodeWilayah(res[0].kode)];
+//     console.log(res2);
+//   }
+
+//   console.log(chalk.bgRed("result"), res, res2);
+// })();
+
+module.exports = { searchKodeWilayah, getRandomKodeWilayah };
