@@ -362,23 +362,23 @@ async function searchKodeWilayah(data) {
 }
 
 // Contoh penggunaan
-(async () => {
-  const res = await searchKodeWilayah({
-    prov: "kalimantan barat",
-    kotkab: "landak",
-    kec: "ngabang",
-    keldes: "tareng",
-  });
+// (async () => {
+//   const res = await searchKodeWilayah({
+//     prov: "Kalimantan Barat",
+//     kotkab: "Landak",
+//     kec: "Ngabang",
+//     keldes: "Tareng",
+//   });
 
-  //console.log(res);
+//   //console.log(res);
 
-  let res2 = "";
-  if (res && res[0]?.kode?.length !== 13) {
-    res2 = [await getRandomKodeWilayah(res[0].kode)];
-    //console.log(res2);
-  }
+//   let res2 = "";
+//   if (res && res[0]?.kode?.length !== 13) {
+//     res2 = [await getRandomKodeWilayah(res[0].kode)];
+//     //console.log(res2);
+//   }
 
-  console.log(chalk.bgRed("result"), res, res2);
-})();
+//   console.log(chalk.bgRed("result"), res, res2);
+// })();
 
 module.exports = { searchKodeWilayah, getRandomKodeWilayah };
