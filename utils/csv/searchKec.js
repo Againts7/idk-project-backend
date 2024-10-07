@@ -12,19 +12,22 @@ function searchKec(kec, kodeWilayahList, addReport) {
   );
 
   if (kecDitemukan && kecDitemukan.length > 0) {
+    if (kecDitemukan.length === 1) return kecDitemukan;
+
+    const listNama = kecDitemukan.map((item) => item.nama);
+
+    const namaPalingMirip = searchSimilarity(kec, listNama);
+
+    if (namaPalingMirip) {
+      kecDitemukan = kecDitemukan.filter(({ nama }) => nama == namaPalingMirip);
+    }
+
+    addReport("kec turunan ditemukan sebanyak: " + kecDitemukan.length);
     console.log(
       chalk.bgCyan("kecDitemukan\n"),
       kecDitemukan,
       "\n============================================================"
     );
-    const kodeKec = kecDitemukan.map((item) => item.kode);
-
-    const dataTurunan = kodeWilayahList.filter((item) =>
-      kodeKec.some((kode) => item.kode.startsWith(kode))
-    );
-
-    kecDitemukan = dataTurunan;
-    addReport("kec turunan ditemukan sebanyak: " + kecDitemukan.length);
   } else {
     addReport("kec gagal ditemukan");
     const namakec = kodeWilayahList

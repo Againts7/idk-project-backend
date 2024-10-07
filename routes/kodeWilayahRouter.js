@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.get("/", async (req, res, next) => {
   try {
-    const { prov = '', kotkab = '', kec = '', keldes = '' } = req.query;
+    const { prov = "", kotkab = "", kec = "", keldes = "" } = req.query;
 
     console.log("query:", prov, kotkab, kec, keldes);
 

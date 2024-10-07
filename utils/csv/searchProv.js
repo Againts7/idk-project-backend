@@ -13,20 +13,23 @@ function searchProv(prov, kodeWilayahList, addReport) {
   );
 
   if (provDitemukan && provDitemukan.length > 0) {
+    if (provDitemukan.length === 1) return provDitemukan;
+
+    const listNama = provDitemukan.map((item) => item.nama);
+
+    const namaPalingMirip = searchSimilarity(prov, listNama);
+
+    if (namaPalingMirip) {
+      provDitemukan = provDitemukan.filter(
+        ({ nama }) => nama === namaPalingMirip
+      );
+    }
+
     console.log(
       chalk.bgCyan("prov ditemukan\n"),
       provDitemukan,
       "\n============================================================"
     );
-
-    const kodeProvinsi = provDitemukan.map((item) => item.kode);
-
-    const dataTurunan = kodeWilayahList.filter((item) =>
-      kodeProvinsi.some((kode) => item.kode.startsWith(kode))
-    );
-
-    provDitemukan = dataTurunan;
-
     addReport("prov turunan ditemukan sebanyak: " + provDitemukan.length);
   } else {
     addReport("prov gagal ditemukan");

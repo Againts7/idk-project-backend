@@ -58,7 +58,7 @@ function compareData(forCompare, keldesDitemukan, addReport, context) {
     addReport(
       `komparasi antara ${context} ditemukan sebanyak: ` + relasi.length
     );
-    // console.log(`compare result ${context}:`, relasi);
+    console.log(chalk.bgCyan(`compare result ${context}:`), relasi);
   } else {
     addReport(`komparasi antara ${context} tidak ditemukan`);
   }
@@ -73,6 +73,8 @@ async function searchKodeWilayah(data) {
   kotkab = kotkab.toLowerCase().trim();
   kec = kec.toLowerCase().trim();
   keldes = keldes.toLowerCase().trim();
+
+  console.log("=====", keldes, kec, kotkab, prov, "=====");
 
   let report = "";
 
@@ -93,8 +95,6 @@ async function searchKodeWilayah(data) {
   }
 
   try {
-    // if (!keldes) throw new Error("dibutuhkan keldes");
-
     const kodeWilayahList = (await readCSV()).map((item) => {
       return { ...item, nama: item.nama.toLowerCase() };
     });
@@ -114,7 +114,17 @@ async function searchKodeWilayah(data) {
     let kotkabDitemukan = [];
 
     if (kotkab) {
-      kotkabDitemukan = searchKotKab(kotkab, kodeWilayahList, addReport);
+      if (prov && provDitemukan.length > 0) {
+        const kodeList = provDitemukan.map((item) => item.kode);
+        const prov_kotkab = kodeWilayahList.filter(
+          (item) =>
+            item.kode.length === 5 &&
+            kodeList.some((i) => item.kode.startsWith(i))
+        );
+        kotkabDitemukan = searchKotKab(kotkab, prov_kotkab, addReport);
+      } else {
+        kotkabDitemukan = searchKotKab(kotkab, kodeWilayahList, addReport);
+      }
     } else {
       addReport("tidak terdapat kotkab input");
     }
@@ -122,15 +132,73 @@ async function searchKodeWilayah(data) {
     let kecDitemukan = [];
 
     if (kec) {
-      kecDitemukan = searchKec(kec, kodeWilayahList, addReport);
+      if (provDitemukan.length || kotkabDitemukan.length) {
+        if (kotkabDitemukan.length > 0) {
+          const kodeList = kotkabDitemukan.map((item) => item.kode);
+          const kotkab_kec = kodeWilayahList.filter(
+            ({ kode }) =>
+              kode.length === 8 && kodeList.some((i) => kode.startsWith(i))
+          );
+          if (kotkab_kec) kecDitemukan = searchKec(kec, kotkab_kec, addReport);
+        } else {
+          const kodeList = provDitemukan.map((item) => item.kode);
+          const prov_kec = kodeWilayahList.filter(
+            ({ kode }) =>
+              kode.length === 8 && kodeList.some((i) => kode.startsWith(i))
+          );
+          if (prov_kec) kecDitemukan = searchKec(kec, prov_kec, addReport);
+        }
+      } else {
+        kecDitemukan = searchKec(kec, kodeWilayahList, addReport);
+      }
     } else {
       addReport("tidak terdapat kec input");
     }
 
-    const keldesDitemukan = [];
+    // ============ cari keldes ============
+
+    let keldesDitemukan = [];
 
     if (keldes) {
-      keldesDitemukan.push(...searchKeldes(keldes, kodeWilayahList, addReport));
+      if (
+        provDitemukan.length ||
+        kotkabDitemukan.length ||
+        kecDitemukan.length
+      ) {
+        if (kecDitemukan.length > 0) {
+          console.log(chalk.bgGreen("keldes: kec ditemukan"));
+          const kodeList = kecDitemukan.map((item) => item.kode);
+          const kel_keldes = kodeWilayahList.filter(
+            ({ kode }) =>
+              kode.length === 13 && kodeList.some((i) => kode.startsWith(i))
+          );
+          if (kel_keldes) {
+            keldesDitemukan = searchKeldes(keldes, kel_keldes, addReport);
+          }
+        } else if (keldesDitemukan.length === 0 && kotkabDitemukan.length > 0) {
+          console.log(chalk.bgGreen("keldes: kotkab ditemukan"));
+
+          const kodeList = kotkabDitemukan.map((item) => item.kode);
+          const kotkab_keldes = kodeWilayahList.filter(
+            ({ kode }) =>
+              kode.length === 13 && kodeList.some((i) => kode.startsWith(i))
+          );
+          if (kotkab_keldes) {
+            keldesDitemukan = searchKeldes(keldes, kotkab_keldes, addReport);
+          }
+        } else {
+          const kodeList = provDitemukan.map((item) => item.kode);
+          const prov_keldes = kodeWilayahList.filter(
+            ({ kode }) =>
+              kode.length === 13 && kodeList.some((i) => kode.startsWith(i))
+          );
+          if (prov_keldes) {
+            keldesDitemukan = searchKeldes(keldes, prov_keldes, addReport);
+          }
+        }
+      } else {
+        keldesDitemukan = searchKeldes(keldes, kodeWilayahList, addReport);
+      }
     } else {
       addReport("tidak terdapat keldes input");
     }
@@ -148,7 +216,7 @@ async function searchKodeWilayah(data) {
       );
     }
 
-    if (compare_prov_kotkab.length === 1) {
+    if (compare_prov_kotkab.length === 1 && !keldes && !kec) {
       //console.log(typeof compare_prov_kotkab, "compare_prov_kotkab");
       return compare_prov_kotkab;
     }
@@ -245,7 +313,7 @@ async function searchKodeWilayah(data) {
     }
 
     if (compare_kotkab_keldes.length === 1) {
-      //console.log(typeof compare_kotkab_keldes, "compare_kotkab_keldes");
+      console.log(typeof compare_kotkab_keldes, "compare_kotkab_keldes");
       return compare_kotkab_keldes;
     }
     if (compare_kotkab_keldes.length > 1) {
@@ -295,13 +363,23 @@ async function searchKodeWilayah(data) {
         .context;
 
       if (tersedikit.length > 0) {
-        const cobaKeldes = tersedikit.find(
+        console.log("tersedikit", tersedikit);
+        const cobaKeldes = tersedikit.filter(
           ({ kode, nama }) => kode.length === 13 && nama === keldes
         );
-        if (cobaKeldes) return [cobaKeldes];
+        if (cobaKeldes.length === 1) return cobaKeldes;
 
-        const cobaKec = searchKec(kec, tersedikit, addReport);
-        if (cobaKec && cobaKec.length) {
+        let cobaKec = searchKec(kec, tersedikit, addReport);
+        if (cobaKec && cobaKec.length === 1) {
+          return cobaKec;
+        }
+        if (cobaKec && cobaKec.length > 1) {
+          cobaKec = tersedikit.filter(({ nama }) => nama === kec);
+        }
+        if (cobaKec && cobaKec.length === 1) {
+          return cobaKec;
+        }
+        if (cobaKec && cobaKec.length > 1) {
           const mirip = searchSimilarity(
             kec,
             cobaKec.map((item) => item.nama)
@@ -316,6 +394,7 @@ async function searchKodeWilayah(data) {
             kotkab,
             cobaKotkab.map((item) => item.nama)
           );
+          console.log("mirip", mirip);
           if (mirip) return cobaKotkab.find(({ nama }) => nama === mirip);
         }
 
@@ -377,23 +456,23 @@ async function searchKodeWilayah(data) {
 }
 
 // Contoh penggunaan
-// (async () => {
-//   const res = await searchKodeWilayah({
-//     prov: "Jawa Barat",
-//     kotkab: "Bandung Barat",
-//     // kec: "Ngabang",
-//     keldes: "Sukamulya",
-//   });
+(async () => {
+  const res = await searchKodeWilayah({
+    prov: "Jawa Barat",
+    kotkab: "Bandung Barat",
+    // kec: "Ngabang",
+    keldes: "Sukamulya",
+  });
 
-//   //console.log(res);
+  //console.log(res);
 
-//   let res2 = "";
-//   if (res && res[0]?.kode?.length !== 13) {
-//     res2 = [await getRandomKodeWilayah(res[0].kode)];
-//     //console.log(res2);
-//   }
+  let res2 = "";
+  if (res && res[0]?.kode?.length !== 13) {
+    res2 = [await getRandomKodeWilayah(res[0].kode)];
+    //console.log(res2);
+  }
 
-//   console.log(chalk.bgRed("result"), res, res2);
-// })();
+  console.log(chalk.bgRed("result"), res, res2);
+})();
 
 module.exports = { searchKodeWilayah, getRandomKodeWilayah };

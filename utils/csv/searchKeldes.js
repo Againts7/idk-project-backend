@@ -17,13 +17,24 @@ function searchKeldes(keldes, kodeWilayahList, addReport) {
     ) || [];
 
   if (keldesDitemukan && keldesDitemukan.length > 0) {
-    // const kodeKeldes = keldesDitemukan.map((item) => item.kode);
+    if (keldesDitemukan.length === 1) return keldesDitemukan;
 
-    // const dataTurunan = kodeWilayahList.filter((item) =>
-    //   kodeKeldes.some((kode) => item.kode.startsWith(kode))
-    // );
+    console.log(
+      chalk.bgWhite("keldes ditemukan\n"),
+      keldesDitemukan,
+      "\n=================================================================="
+    );
+    const listNama = keldesDitemukan.map((item) => item.nama);
 
-    // keldesDitemukan = dataTurunan;
+    const namaPalingMirip = searchSimilarity(keldes, listNama);
+
+    console.log("nama paling mirip keldes", namaPalingMirip);
+
+    if (namaPalingMirip) {
+      keldesDitemukan = keldesDitemukan.filter(
+        ({ nama }) => nama === namaPalingMirip
+      );
+    }
 
     addReport("keldes ditemukan sebanyak: " + keldesDitemukan.length);
     console.log(

@@ -18,20 +18,24 @@ function searchKotKab(kotkab, kodeWilayahList, addReport) {
   );
 
   if (kotkabDitemukan && kotkabDitemukan.length > 0) {
+    if (kotkabDitemukan.length === 1) return kotkabDitemukan;
+
+    const listNama = kotkabDitemukan.map((item) => item.nama);
+
+    const namaPalingMirip = searchSimilarity(kotkab, listNama);
+
+    if (namaPalingMirip) {
+      kotkabDitemukan = kotkabDitemukan.filter(
+        ({ nama }) => nama === namaPalingMirip
+      );
+    }
+
+    addReport("kotkab turunan ditemukan sebanyak: " + kotkabDitemukan.length);
     console.log(
       chalk.bgCyan("kotkab ditemukan\n"),
       kotkabDitemukan,
       "\n============================================================"
     );
-    const kodeKotkab = kotkabDitemukan.map((item) => item.kode);
-
-    const dataTurunan = kodeWilayahList.filter((item) =>
-      kodeKotkab.some((kode) => item.kode.startsWith(kode))
-    );
-
-    kotkabDitemukan = dataTurunan;
-
-    addReport("kotkab turunan ditemukan sebanyak: " + kotkabDitemukan.length);
   } else {
     addReport("kotkab gagal ditemukan");
     const namakotkab = kodeWilayahList
