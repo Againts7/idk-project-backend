@@ -17,6 +17,8 @@ function searchKotKab(kotkab, kodeWilayahList, addReport) {
           .includes(nama.replace(/^(kota|kabupaten|kab\.?)/, "").trim()))
   );
 
+  console.log(chalk.bgMagenta("kotkab"), kotkabDitemukan);
+
   if (kotkabDitemukan && kotkabDitemukan.length > 0) {
     if (kotkabDitemukan.length === 1) return kotkabDitemukan;
 
@@ -25,9 +27,19 @@ function searchKotKab(kotkab, kodeWilayahList, addReport) {
     const namaPalingMirip = searchSimilarity(kotkab, listNama);
 
     if (namaPalingMirip) {
-      kotkabDitemukan = kotkabDitemukan.filter(
-        ({ nama }) => nama === namaPalingMirip
+      const apaKota = kotkabDitemukan.some(({ nama }) =>
+        /^(kota|kabupaten|kab\.?)/.test(nama)
       );
+
+      if (apaKota && !/^(kabupaten|kab\.?)/.test(kotkab)) {
+        kotkabDitemukan = kotkabDitemukan.filter(
+          ({ nama }) => !/^(kabupaten|kab\.?)/.test(nama)
+        );
+      } else {
+        kotkabDitemukan = kotkabDitemukan.filter(
+          ({ nama }) => nama === namaPalingMirip
+        );
+      }
     }
 
     addReport("kotkab turunan ditemukan sebanyak: " + kotkabDitemukan.length);
