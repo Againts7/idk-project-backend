@@ -459,9 +459,9 @@ async function searchKodeWilayah(data) {
 // (async () => {
 //   const res = await searchKodeWilayah({
 //     prov: "Jawa Barat",
-//     kotkab: "Bekasi",
+//     kotkab: "Bandung Barat",
 //     // kec: "Ngabang",
-//     keldes: "Rawa Silam",
+//     keldes: "Sukamulya",
 //   });
 
 //   //console.log(res);

@@ -27,13 +27,11 @@ function searchKotKab(kotkab, kodeWilayahList, addReport) {
     const namaPalingMirip = searchSimilarity(kotkab, listNama);
 
     if (namaPalingMirip) {
-      const apaKota = kotkabDitemukan.some(({ nama }) =>
-        /^(kota|kabupaten|kab\.?)/.test(nama)
-      );
+      const apaKota = kotkabDitemukan.some(({ nama }) => /^(kota)/.test(nama));
 
-      if (apaKota && !/^(kabupaten|kab\.?)/.test(kotkab)) {
-        kotkabDitemukan = kotkabDitemukan.filter(
-          ({ nama }) => !/^(kabupaten|kab\.?)/.test(nama)
+      if (apaKota && /^(kota)/.test(kotkab)) {
+        kotkabDitemukan = kotkabDitemukan.filter(({ nama }) =>
+          /^(kota)/.test(nama)
         );
       } else {
         kotkabDitemukan = kotkabDitemukan.filter(
