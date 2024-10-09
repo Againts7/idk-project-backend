@@ -475,4 +475,4 @@ async function searchKodeWilayah(data) {
 //   console.log(chalk.bgRed("result"), res, res2);
 // })();
 
-module.exports = { searchKodeWilayah, getRandomKodeWilayah };
+module.exports = { searchKodeWilayah, getRandomKodeWilayah, readCSV };

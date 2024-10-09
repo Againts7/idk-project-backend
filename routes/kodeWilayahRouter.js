@@ -1,11 +1,42 @@
 const express = require("express");
 const { searchKodeWilayah, getRandomKodeWilayah } = require("../utils/csv");
+const {
+  getProvinsiList,
+  getKabupatenKotaList,
+  getKelDesList,
+  getKecamatanList,
+} = require("../utils/get-address");
 
 const router = express.Router();
 
 router.get("/", async (req, res, next) => {
   try {
-    const { prov = "", kotkab = "", kec = "", keldes = "" } = req.query;
+    const {
+      prov = "",
+      kotkab = "",
+      kec = "",
+      keldes = "",
+      kode = "",
+    } = req.query;
+
+    if (kode) {
+      if (kode === "list") {
+        const data = await getProvinsiList(kode);
+        return res.json({ status: "success", data });
+      } else if (kode.length === 2) {
+        const data = await getKabupatenKotaList(kode);
+        return res.json({ status: "success", data });
+      } else if (kode.length === 5) {
+        const data = await getKecamatanList(kode);
+        return res.json({ status: "success", data });
+      } else if (kode.length === 8) {
+        const data = await getKelDesList(kode);
+        return res.json({ status: "success", data });
+      } else {
+        const data = await getProvinsiList(kode);
+        return res.json({ status: "success", data });
+      }
+    }
 
     console.log("query:", prov, kotkab, kec, keldes);
 
