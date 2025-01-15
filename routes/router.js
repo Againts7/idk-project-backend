@@ -11,6 +11,7 @@ const registerRouter = require("./registerRouter");
 const postcodeRouter = require("./postcodeRouter");
 const kodeWilayahRouter = require("./kodeWilayahRouter");
 const coryn = require("./corynScrapperRouter");
+// const corynDB = require("./corynDatabasesRouter");
 
 router.use("/ytdl", verifyToken, ytdlRouter);
 router.use("/sharp", verifyToken, sharpRouter);
@@ -20,5 +21,6 @@ router.use("/get-data-from-postcode", postcodeRouter);
 router.use("/register", registerRouter);
 router.use("/get-kode-wilayah", kodeWilayahRouter);
 router.use("/coryn-scrapper", coryn);
+// router.use("/coryn-db", corynDB);
 
 module.exports = router;

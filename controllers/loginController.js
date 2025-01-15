@@ -34,7 +34,7 @@ async function loginController(req, res, next) {
     const token = jwt.sign(
       { id: user._id, username: user.name },
       JWT_SECRET_KEY,
-      { expiresIn: "1d" } // Token berlaku selama 1 hari
+      { expiresIn: "7d" } // Token berlaku selama 1 hari
     );
 
     // Kirim token ke client

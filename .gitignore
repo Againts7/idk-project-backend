@@ -10,3 +10,7 @@
 /mongo.js
 /.gitignore
 /utils/sql
+/utils/coryn-db
+/db
+coryn.sqlite
+/routes/corynDatabasesRouter.js

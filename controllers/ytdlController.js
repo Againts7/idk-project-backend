@@ -9,7 +9,6 @@ async function ytdlGet(req, res, next) {
     }
     const youtubeInfo = new YoutubeInfo();
 
-    await youtubeInfo.init(); // Tunggu hingga inisialisasi selesai
     const videoID = await youtubeInfo.getVideoID(link); // Tunggu hingga mendapatkan video ID
     if (!videoID) {
       throw new Error("id video tidak ditemukan");
@@ -39,7 +38,6 @@ async function ytdlDownload(req, res, next) {
       throw new Error("link nya mana");
     }
     const youtubeInfo = new YoutubeInfo();
-    await youtubeInfo.init();
 
     const videoID = await youtubeInfo.getVideoID(link); // Tunggu hingga mendapatkan video ID
 

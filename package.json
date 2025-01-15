@@ -29,7 +29,7 @@
     "sharp": "0.32.6",
     "sqlite3": "^5.1.7",
     "string-similarity": "^4.0.4",
-    "youtubei.js": "^10.4.0"
+    "youtubei.js": "^12.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.10.0",
